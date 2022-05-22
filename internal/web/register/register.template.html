@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <style>
+    .content {
+      width: 320px;
+      height: 400px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      -webkit-transform: translate(-50%, 0);
+      transform: translate(-50%, 0);
+    }
+
+    .registerInput {
+      width: 100%;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <form class="content" action="/register" method="post">
+    <div>
+      <input class="registerInput" type="text" name="registrationToken" value="{{ .Username }}" disabled>
+    </div>
+    <div>
+      <input class="registerInput" type="text" name="registrationToken" value="{{ .RegistrationToken }}" required hidden>
+    </div>
+    <div>
+      <input class="registerInput" type="password" placeholder="password" name="password" value="{{ .Password }}" required>
+    </div>
+    <div>
+      <input class="registerInput" type="password" placeholder="confirm password" name="confirmPassword" value="{{ .ConfirmPassword }}" required>
+    </div>
+    <div>
+      <button class="registerSubmit" type="submit">register</button>
+    </div>
+
+    {{if .Errors}}
+      <ul>
+        {{range .Errors}}
+          <li class="error">{{ .Error }}</li>
+        {{end}}
+      </ul>
+    {{end}}
+  </form>
+
+</body>
+
+</html>

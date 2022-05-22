@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+
+  <style>
+    .content {
+      width: 200px;
+      height: 400px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      -webkit-transform: translate(-50%, 0);
+      transform: translate(-50%, 0);
+    }
+
+    .loginInput {
+      width: 100%;
+    }
+
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+  <form class="content" action="{{ .Loginpath }}" method="post">
+    <div>
+      <input class="loginInput" type="text" placeholder="username" name="username" value="{{ .Username }}" required>
+    </div>
+    <div>
+      <input class="loginInput" type="password" placeholder="password" name="password" value="{{ .Password }}" required>
+    </div>
+    <div>
+      <input type="text" name="redirect" value="{{ .Redirect }}" hidden>
+    </div>
+    <div>
+      <input type="text" name="loginpath" value="{{ .Loginpath }}" hidden>
+    </div>
+    <div>
+      <button class="loginSubmit" type="submit">login</button>
+    </div>
+    {{range .Errors}}
+      <div class="error">{{ .Error }}</div>
+    {{end}}
+  </form>
+</body>
+
+</html>
