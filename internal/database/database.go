@@ -101,23 +101,23 @@ func RegisterNewUser(db *sqlx.DB, username string) (*user.User, error) {
 	existingUser, err := FindUserByUsername(db, username)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error querying database: %w", err)
+		return nil, fmt.Errorf("error querying database: %w", err)
 	}
 
 	if existingUser != nil {
-		return nil, fmt.Errorf("User %s already exists (id: %d)", existingUser.Username, existingUser.Id)
+		return nil, fmt.Errorf("user %s already exists (id: %d)", existingUser.Username, existingUser.Id)
 	}
 
 	registrationTokenBytes := make([]byte, registrationTokenSize)
 	numRead, err := rand.Read(registrationTokenBytes)
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not generate random registrationToken: %w", err)
+		return nil, fmt.Errorf("could not generate random registrationToken: %w", err)
 	}
 
 	if numRead != registrationTokenSize {
 		return nil, fmt.Errorf(
-			"Tried to generate random registrationToken with %d bytes, but only %d random bytes were read.",
+			"tried to generate random registrationToken with %d bytes, but only %d random bytes were read",
 			registrationTokenSize,
 			numRead,
 		)
@@ -132,13 +132,13 @@ func RegisterNewUser(db *sqlx.DB, username string) (*user.User, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("Error inserting new user into the database: %w", err)
+		return nil, fmt.Errorf("error inserting new user into the database: %w", err)
 	}
 
 	id, err := sqlResult.LastInsertId()
 
 	if err != nil {
-		return nil, fmt.Errorf("Error retrieving ID of newly inserted user: %w", err)
+		return nil, fmt.Errorf("error retrieving ID of newly inserted user: %w", err)
 	}
 
 	newUser := &user.User{
@@ -171,7 +171,7 @@ func CompleteRegistration(db *sqlx.DB, userId int64, registrationToken string, p
 	}
 
 	if updatedCount != 1 {
-		return fmt.Errorf("Expected to update exactly 1 user, but instead updated %d users", updatedCount)
+		return fmt.Errorf("expected to update exactly 1 user, but instead updated %d users", updatedCount)
 	}
 
 	return nil

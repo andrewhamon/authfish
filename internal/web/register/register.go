@@ -58,7 +58,7 @@ func (s *Service) showRegistration(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, err.Error(), http.StatusInternalServerError)
 		renderTemplate(rw, http.StatusInternalServerError, templateVars{
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Error querying database: %w", err)},
+			Errors:            []error{fmt.Errorf("error querying database: %w", err)},
 		})
 
 		return
@@ -67,7 +67,7 @@ func (s *Service) showRegistration(rw http.ResponseWriter, r *http.Request) {
 	if user == nil {
 		renderTemplate(rw, http.StatusUnauthorized, templateVars{
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Registration token not valid")},
+			Errors:            []error{fmt.Errorf("registration token not valid")},
 		})
 		return
 	}
@@ -92,7 +92,7 @@ func (s *Service) handleRegistration(rw http.ResponseWriter, r *http.Request) {
 			Password:          password,
 			ConfirmPassword:   confirmPassword,
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Error querying database: %w", err)},
+			Errors:            []error{fmt.Errorf("error querying database: %w", err)},
 		})
 	}
 
@@ -102,7 +102,7 @@ func (s *Service) handleRegistration(rw http.ResponseWriter, r *http.Request) {
 			Password:          password,
 			ConfirmPassword:   confirmPassword,
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Registration token not valid")},
+			Errors:            []error{fmt.Errorf("registration token not valid")},
 		})
 		return
 	}
@@ -127,7 +127,7 @@ func (s *Service) handleRegistration(rw http.ResponseWriter, r *http.Request) {
 			Password:          password,
 			ConfirmPassword:   confirmPassword,
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Could not create user: %w", err)},
+			Errors:            []error{fmt.Errorf("could not create user: %w", err)},
 		})
 		return
 	}
@@ -138,7 +138,7 @@ func (s *Service) handleRegistration(rw http.ResponseWriter, r *http.Request) {
 			Password:          password,
 			ConfirmPassword:   confirmPassword,
 			RegistrationToken: registrationToken,
-			Errors:            []error{fmt.Errorf("Could not save user session: %w", err)},
+			Errors:            []error{fmt.Errorf("could not save user session: %w", err)},
 		})
 		return
 	}
@@ -177,14 +177,14 @@ func validatePasswords(password string, confirmPassword string) []error {
 
 func checkPasswordsMatch(password string, confirmPassword string) error {
 	if password != confirmPassword {
-		return fmt.Errorf("Passwords do not match.")
+		return fmt.Errorf("passwords do not match")
 	}
 	return nil
 }
 
 func checkPasswordLength(password string) error {
 	if len(password) < MinimumPasswordLength {
-		return fmt.Errorf("Password must be at least %d characters long.", MinimumPasswordLength)
+		return fmt.Errorf("password must be at least %d characters long", MinimumPasswordLength)
 	}
 
 	return nil

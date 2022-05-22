@@ -50,7 +50,7 @@ func New(store sessions.Store, db *sqlx.DB) *Service {
 }
 
 func (s *Service) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	currentUser, err := current_user.CurrentUser(r.Context())
+	currentUser, _ := current_user.CurrentUser(r.Context())
 
 	originalUrl := r.Header.Get("X-Original-URL")
 
@@ -69,7 +69,7 @@ func (s *Service) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		loginpath = "/login"
 	}
 
-	if err == nil && currentUser != nil {
+	if currentUser != nil {
 		http.Redirect(rw, r, originalUrl, http.StatusFound)
 		return
 	}
@@ -112,7 +112,7 @@ func (s *Service) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			Password:  password,
 			Redirect:  redirect,
 			Loginpath: loginpath,
-			Errors:    []error{fmt.Errorf("Could not save user session: %w", err)},
+			Errors:    []error{fmt.Errorf("could not save user session: %w", err)},
 		})
 		return
 	}

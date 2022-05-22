@@ -118,6 +118,6 @@ func buildListenAddress(host string, port int, protocol string) string {
 	case "unix":
 		return host
 	default:
-		panic(fmt.Errorf("Unknown protocol %s", protocol))
+		panic(fmt.Errorf("unknown protocol %s", protocol))
 	}
 }

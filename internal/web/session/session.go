@@ -57,13 +57,13 @@ func GetUserIdFromSession(rw http.ResponseWriter, r *http.Request, store session
 	rawUserId, ok := session.Values[UserIdKey]
 
 	if !ok {
-		return 0, fmt.Errorf("Could not access user ID in session using key '%s'", UserIdKey)
+		return 0, fmt.Errorf("could not access user ID in session using key '%s'", UserIdKey)
 	}
 
 	userId, ok := rawUserId.(int64)
 
 	if !ok {
-		return 0, fmt.Errorf("Could not cast raw user id (%#v) to int64", rawUserId)
+		return 0, fmt.Errorf("could not cast raw user id (%#v) to int64", rawUserId)
 	}
 
 	return userId, nil

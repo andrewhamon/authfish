@@ -5,6 +5,8 @@ pkgs.mkShell {
     pkgs.go
     pkgs.gopls
     pkgs.nixpkgs-fmt
+    pkgs.delve
+    pkgs.go-tools
   ];
 
   shellHook = ''

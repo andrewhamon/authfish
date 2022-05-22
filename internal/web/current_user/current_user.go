@@ -59,7 +59,7 @@ func CurrentUser(context context.Context) (*user.User, error) {
 
 	if !ok {
 		log.Printf("Error fetching current user. Could not cast %#v to *user.User", rawCurrentUser)
-		return nil, fmt.Errorf("Error casting user context to user")
+		return nil, fmt.Errorf("error casting user context to user")
 	}
 
 	return currentUser, nil
