@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
@@ -18,33 +19,25 @@ import (
 // are required to check for an authenticated user in the request context.
 func AddCurrentUserToRequestContext(db *sqlx.DB, store sessions.Store, handler http.Handler) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		userId, err := session.GetUserIdFromSession(rw, r, store)
-
-		if err != nil {
-			session.DeleteSession(rw, r, store)
-			handler.ServeHTTP(rw, r)
+		userFromSession, err := findUserFromSession(db, store, rw, r)
+		if err == nil && userFromSession != nil {
+			setUserContextAndServe(userFromSession, handler, rw, r)
 			return
 		}
 
-		currentUser, err := database.FindUserById(db, userId)
-
-		if err != nil {
-			log.Printf("Valid session found, but encountered database error fetching user. Deleting session. Original error: %v", err)
-			session.DeleteSession(rw, r, store)
-			handler.ServeHTTP(rw, r)
+		userFromBasicAuth, err := findUserFromBasicAuth(db, store, rw, r)
+		if err == nil && userFromBasicAuth != nil {
+			setUserContextAndServe(userFromBasicAuth, handler, rw, r)
 			return
 		}
 
-		if currentUser == nil {
-			log.Printf("Valid session found, but user %d no longer exists. Deleting session.", userId)
-			session.DeleteSession(rw, r, store)
-			handler.ServeHTTP(rw, r)
+		userFromBearerToken, err := findUserFromBearerToken(db, store, rw, r)
+		if err == nil && userFromBearerToken != nil {
+			setUserContextAndServe(userFromBearerToken, handler, rw, r)
 			return
 		}
 
-		newContex := context.WithValue(r.Context(), user.CurrentUserContextKey, currentUser)
-
-		handler.ServeHTTP(rw, r.WithContext(newContex))
+		handler.ServeHTTP(rw, r)
 	}
 }
 
@@ -63,4 +56,40 @@ func CurrentUser(context context.Context) (*user.User, error) {
 	}
 
 	return currentUser, nil
+}
+
+func findUserFromSession(db *sqlx.DB, store sessions.Store, rw http.ResponseWriter, r *http.Request) (*user.User, error) {
+	userId, err := session.GetUserIdFromSession(rw, r, store)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return database.FindUserById(db, userId)
+}
+
+func findUserFromBasicAuth(db *sqlx.DB, store sessions.Store, rw http.ResponseWriter, r *http.Request) (*user.User, error) {
+	_, apiKey, ok := r.BasicAuth()
+
+	if !ok {
+		return nil, fmt.Errorf("basic auth credentials not found")
+	}
+
+	return database.FindUserByApiKey(db, apiKey)
+}
+
+func findUserFromBearerToken(db *sqlx.DB, store sessions.Store, rw http.ResponseWriter, r *http.Request) (*user.User, error) {
+	reqToken := strings.TrimSpace(r.Header.Get("Authorization"))
+	tokenParts := strings.SplitN(reqToken, "Bearer", 2)
+	if len(tokenParts) != 2 {
+		return nil, fmt.Errorf("bearer token not found")
+	}
+	apiKey := strings.TrimSpace(tokenParts[1])
+
+	return database.FindUserByApiKey(db, apiKey)
+}
+
+func setUserContextAndServe(u *user.User, handler http.Handler, rw http.ResponseWriter, r *http.Request) {
+	newContext := context.WithValue(r.Context(), user.CurrentUserContextKey, u)
+	handler.ServeHTTP(rw, r.WithContext(newContext))
 }

@@ -1,6 +1,8 @@
 package me
 
 import (
+	"authfish/internal/api_key"
+	"authfish/internal/database"
 	"authfish/internal/user"
 	"authfish/internal/web/current_user"
 	"authfish/internal/web/session"
@@ -20,7 +22,8 @@ var (
 )
 
 type templateVars struct {
-	User *user.User
+	User    *user.User
+	ApiKeys []api_key.ApiKey
 }
 
 func renderTemplate(rw http.ResponseWriter, status int, vars templateVars) {
@@ -48,7 +51,10 @@ func (s *Service) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	apiKeys, _ := database.ListApiKeys(s.db, *currentUser)
+
 	renderTemplate(rw, http.StatusOK, templateVars{
-		User: currentUser,
+		User:    currentUser,
+		ApiKeys: apiKeys,
 	})
 }

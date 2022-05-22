@@ -4,16 +4,55 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>User info for {{ .User.Username }}</title>
+  <title>About {{ .User.Username }}</title>
+  <style>
+    table, th, td {
+      border: 1px solid black;
+      border-collapse: collapse;
+      padding-right: 1em;
+    }
+  </style>
 </head>
 
 <body>
-  <p>
-    ID: {{ .User.Id }}
-  </p>
-  <p>
-    Username: {{ .User.Username }}
-  </p>
+  <div>
+    <h2>About {{ .User.Username }}</h2>
+    <table>
+      <tr>
+        <th>ID</th>
+        <td>{{ .User.Id }}</td>
+      </tr>
+      <tr>
+        <th>Username</th>
+        <td>{{ .User.Username }}</td>
+      </tr>
+      <tr>
+        <th>Created At</th>
+        <td>{{ .User.CreatedAt }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div>
+  <h2>API Keys</h2>
+
+  <table>
+    <tr>
+      <th>Memo</th>
+      <th>Key</th> 
+      <th>Created At</th>
+      <th>Last Seen</th>
+    </tr>
+    {{range .ApiKeys}}
+      <tr>
+        <td>{{ .Memo }}</td>
+        <td>{{ .Key }}</td> 
+        <td>{{ .CreatedAt }}</td>
+        <td>{{ .LastSeen }}</td>
+      </tr>
+    {{end}}
+  </table>
+  </div>
 </body>
 
 </html>

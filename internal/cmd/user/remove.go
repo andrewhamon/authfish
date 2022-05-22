@@ -14,15 +14,10 @@ type RemoveCmd struct {
 
 func (r *RemoveCmd) Run(ctx *context.AppContext) error {
 	username := utils.NormalizeUsername(r.Username)
-	rowsEffected, err := database.DeleteUser(ctx.Db, username)
+	err := database.DeleteUser(ctx.Db, username)
 
 	if err != nil {
-		fmt.Printf("Error adding new user: %v\n", err)
-		os.Exit(1)
-	}
-
-	if rowsEffected != 1 {
-		fmt.Printf("User %s does not exist\n", username)
+		fmt.Printf("Error deleting user %s: %v\n", username, err)
 		os.Exit(1)
 	}
 

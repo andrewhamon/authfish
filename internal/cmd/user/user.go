@@ -8,6 +8,7 @@ import (
 type UserCmd struct {
 	List   ListCmd   `cmd:"" default:""`
 	Add    AddCmd    `cmd:"" aliases:"create,register"`
+	AddKey AddKeyCmd `cmd:""`
 	Remove RemoveCmd `cmd:"" aliases:"rm,del,delete"`
 }
 
