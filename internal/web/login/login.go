@@ -38,14 +38,16 @@ func renderTemplate(rw http.ResponseWriter, status int, vars templateVars) {
 }
 
 type Service struct {
-	store sessions.Store
-	db    *sqlx.DB
+	store   sessions.Store
+	db      *sqlx.DB
+	domains []string
 }
 
-func New(store sessions.Store, db *sqlx.DB) *Service {
+func New(store sessions.Store, db *sqlx.DB, domains []string) *Service {
 	return &Service{
-		store: store,
-		db:    db,
+		store:   store,
+		db:      db,
+		domains: domains,
 	}
 }
 
@@ -106,7 +108,7 @@ func (s *Service) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := session.SetUserSession(rw, r, s.store, *currentUser); err != nil {
+	if err := session.SetUserSession(rw, r, s.store, s.domains, *currentUser); err != nil {
 		renderTemplate(rw, http.StatusInternalServerError, templateVars{
 			Username:  username,
 			Password:  password,

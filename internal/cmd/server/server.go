@@ -23,9 +23,11 @@ import (
 )
 
 type ServerCmd struct {
-	Host     string `help:"Hostname or IP address to listen on, or path to socket if --protocol=unix" default:"127.0.0.1"`
-	Port     int    `help:"Port to listen on. Only applies when --protocol=tcp (the default)" default:"8080"`
-	Protocol string `help:"One of tcp,unix" default:"tcp" enum:"tcp,unix"`
+	Host     string   `help:"Hostname or IP address to listen on, or path to socket if --protocol=unix" default:"127.0.0.1"`
+	Port     int      `help:"Port to listen on. Only applies when --protocol=tcp (the default)" default:"8080"`
+	Protocol string   `help:"One of tcp,unix" default:"tcp" enum:"tcp,unix"`
+	Domain   []string `help:"One or more domains to set cookies for. Must set X-Original-URL header when proxying. First domain which is a substring of the request host will be chosen."`
+	Secure   bool     `help:"Set cookie to be secure (HTTPS) only. Defaults to secure." default:"true" negatable:""`
 }
 
 func (r *ServerCmd) Run(ctx *context.AppContext) error {
@@ -40,7 +42,7 @@ func (r *ServerCmd) Run(ctx *context.AppContext) error {
 
 	var sessionStore = sessions.NewCookieStore(generateSecretAuthToken(), generateSecretEncryptionToken())
 	sessionStore.Options.SameSite = http.SameSiteStrictMode
-	sessionStore.Options.Secure = true
+	sessionStore.Options.Secure = r.Secure
 	sessionStore.Options.HttpOnly = true
 
 	handler := handlers.RecoveryHandler()(
@@ -49,7 +51,7 @@ func (r *ServerCmd) Run(ctx *context.AppContext) error {
 			current_user.AddCurrentUserToRequestContext(
 				ctx.Db,
 				sessionStore,
-				buildRoutes(ctx.Db, sessionStore),
+				buildRoutes(ctx.Db, sessionStore, r.Domain),
 			),
 		),
 	)
@@ -87,13 +89,13 @@ func generateSecretEncryptionToken() []byte {
 	return secretEncryptionToken
 }
 
-func buildRoutes(db *sqlx.DB, store sessions.Store) *mux.Router {
+func buildRoutes(db *sqlx.DB, store sessions.Store, domains []string) *mux.Router {
 	r := mux.NewRouter()
 
-	registrationHandler := register.New(store, db)
+	registrationHandler := register.New(store, db, domains)
 	r.Handle("/register", registrationHandler)
 
-	loginHandler := login.New(store, db)
+	loginHandler := login.New(store, db, domains)
 	r.Handle("/login", loginHandler)
 
 	checkHandler := check.New(store, db)

@@ -3,6 +3,8 @@ package session
 import (
 	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"authfish/internal/user"
 
@@ -32,7 +34,7 @@ func DeleteSessionAndRedirectToLogin(rw http.ResponseWriter, r *http.Request, st
 	http.Redirect(rw, r, "/login", http.StatusTemporaryRedirect)
 }
 
-func SetUserSession(rw http.ResponseWriter, r *http.Request, store sessions.Store, user user.User) error {
+func SetUserSession(rw http.ResponseWriter, r *http.Request, store sessions.Store, domains []string, user user.User) error {
 	// Ignoring error on purpose, existing session might be invalid
 	session, _ := store.Get(r, SessionName)
 
@@ -43,6 +45,12 @@ func SetUserSession(rw http.ResponseWriter, r *http.Request, store sessions.Stor
 
 	// 10 year expiration
 	session.Options.MaxAge = 10 * 365 * 24 * 3600
+
+	domain := getMatchingDomain(domains, r)
+
+	if domain != nil {
+		session.Options.Domain = *domain
+	}
 
 	return session.Save(r, rw)
 }
@@ -67,4 +75,31 @@ func GetUserIdFromSession(rw http.ResponseWriter, r *http.Request, store session
 	}
 
 	return userId, nil
+}
+
+func getMatchingDomain(targetDomains []string, request *http.Request) *string {
+	originalUrl := request.Header.Get("X-Original-URL")
+
+	if len(originalUrl) == 0 {
+		return nil
+	}
+
+	parsedUrl, err := url.ParseRequestURI(originalUrl)
+
+	if err != nil {
+		return nil
+	}
+
+	for _, domain := range targetDomains {
+		if strings.Contains(parsedUrl.Host, domain) {
+			return &domain
+		}
+
+		domainWithoutLeadingDot := strings.TrimPrefix(domain, ".")
+		if strings.Contains(parsedUrl.Host, domainWithoutLeadingDot) {
+			return &domain
+		}
+	}
+
+	return nil
 }
