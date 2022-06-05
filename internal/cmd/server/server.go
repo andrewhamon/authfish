@@ -2,11 +2,13 @@ package server
 
 import (
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"authfish/internal/context"
 	"authfish/internal/web/check"
@@ -40,7 +42,11 @@ func (r *ServerCmd) Run(ctx *context.AppContext) error {
 		return err
 	}
 
-	var sessionStore = sessions.NewCookieStore(generateSecretAuthToken(), generateSecretEncryptionToken())
+	sk, err := generateSecretKey(ctx.DataDir)
+	if err != nil {
+		panic(err)
+	}
+	var sessionStore = sessions.NewCookieStore(sk.authToken[:], sk.encryptionToken[:])
 	sessionStore.Options.SameSite = http.SameSiteStrictMode
 	sessionStore.Options.Secure = r.Secure
 	sessionStore.Options.HttpOnly = true
@@ -59,34 +65,42 @@ func (r *ServerCmd) Run(ctx *context.AppContext) error {
 	return http.Serve(listener, handler)
 }
 
-// As per the gorilla session docs, use 32 or 64 bytes. Going with 64.
-func generateSecretAuthToken() []byte {
-	secretAuthToken := make([]byte, 64)
-	numRead, err := rand.Read(secretAuthToken)
-	if err != nil {
-		panic(err)
-	}
-
-	if numRead != 64 {
-		panic("Did not read enough random bytes into secretAuthToken")
-	}
-
-	return secretAuthToken
+type secretKey struct {
+	authToken       [64]byte // As per the gorilla session docs, use 32 or 64 bytes. Going with 64.
+	encryptionToken [32]byte // As per the gorilla session docs, 32 bytes selects AES-256
 }
 
-// As per the gorilla session docs, 32 bytes selects AES-256
-func generateSecretEncryptionToken() []byte {
-	secretEncryptionToken := make([]byte, 32)
-	numRead, err := rand.Read(secretEncryptionToken)
+func generateSecretKey(dataDir string) (secretKey, error) {
+	sk := secretKey{}
+
+	skPath := filepath.Join(dataDir, "secret_key")
+	existingSk, err := readHexBytesFromFile(skPath, 96)
+
+	if err == nil {
+		copy(sk.authToken[:], existingSk[0:64])
+		copy(sk.encryptionToken[:], existingSk[64:96])
+		return sk, nil
+	}
+
+	newSkBytes := make([]byte, 96)
+	numRead, err := rand.Read(newSkBytes)
 	if err != nil {
-		panic(err)
+		return sk, err
 	}
 
-	if numRead != 32 {
-		panic("Did not read enough random bytes into secretEncryptionToken")
+	if numRead != 96 {
+		return sk, fmt.Errorf("only generated %d random bytes, but wanted %d", numRead, 96)
 	}
 
-	return secretEncryptionToken
+	err = writeBytesAsHexToFile(skPath, newSkBytes)
+	if err != nil {
+		return sk, err
+	}
+
+	copy(sk.authToken[:], newSkBytes[0:64])
+	copy(sk.encryptionToken[:], newSkBytes[64:96])
+
+	return sk, nil
 }
 
 func buildRoutes(db *sqlx.DB, store sessions.Store, domains []string) *mux.Router {
@@ -122,4 +136,60 @@ func buildListenAddress(host string, port int, protocol string) string {
 	default:
 		panic(fmt.Errorf("unknown protocol %s", protocol))
 	}
+}
+
+func readHexBytesFromFile(path string, numBytes int) ([]byte, error) {
+	f, err := os.Open(path)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Because of the hex encoding, we need to read double the raw bytes
+	b := make([]byte, numBytes*2)
+
+	n, err := f.Read(b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if n != (numBytes * 2) {
+		return nil, fmt.Errorf("expected to read %d*2 bytes from %s, but actually read %d", numBytes, path, n)
+	}
+
+	output := make([]byte, numBytes)
+
+	n, err = hex.Decode(output, b)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if n != numBytes {
+		return nil, fmt.Errorf("expected to decode %d bytes from hex at path %s, but actually read %d", numBytes, path, n)
+	}
+
+	return output, nil
+}
+
+func writeBytesAsHexToFile(path string, b []byte) error {
+	// We need double the lengh, because of hex encoding, + 1 more byte for a
+	// newline.
+	dataLength := len(b)*2 + 1
+	data := make([]byte, dataLength)
+
+	hex.Encode(data, b)
+
+	// Add a newline to the end. Misconfigured terminal prompts can sometimes
+	// eat lines without newlines. i.e. `cat file_with_no_newline` appears to be
+	// empty when its not.
+	data[len(b)*2] = '\n'
+
+	err := os.WriteFile(path, data, 0600)
+	if err != nil {
+		return err
+
+	}
+	return nil
 }

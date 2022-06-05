@@ -9,4 +9,5 @@ import (
 type AppContext struct {
 	Db      *sqlx.DB
 	BaseUrl *url.URL
+	DataDir string
 }

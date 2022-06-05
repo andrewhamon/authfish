@@ -45,7 +45,8 @@ func main() {
 	database.RunMigrations(db)
 
 	appContext := context.AppContext{
-		Db: db,
+		Db:      db,
+		DataDir: cliStruct.DataDir,
 	}
 
 	if len(cliStruct.BaseURL) == 0 {
