@@ -14,35 +14,34 @@ import (
 )
 
 type CLI struct {
-	User         user.UserCmd     `cmd:""`
-	Server       server.ServerCmd `cmd:""`
-	BaseURL      string
-	DatabasePath string `help:"Path to the authfish sqlite database. Default: ~/.authfish/authfish.sqlite"`
+	User    user.UserCmd     `cmd:""`
+	Server  server.ServerCmd `cmd:""`
+	BaseURL string
+	DataDir string `help:"Path to the authfish data files. Default: ~/.authfish/"`
 }
 
 func main() {
 	cliStruct := CLI{}
 	cli := kong.Parse(&cliStruct)
 
-	if len(cliStruct.DatabasePath) == 0 {
+	if len(cliStruct.DataDir) == 0 {
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			homeDir = "."
 		}
 
-		cliStruct.DatabasePath = filepath.Join(homeDir, ".authfish", "authfish.sqlite")
+		cliStruct.DataDir = filepath.Join(homeDir, ".authfish")
 	}
 
-	databaseDir := filepath.Dir(cliStruct.DatabasePath)
-
-	err := os.MkdirAll(databaseDir, os.ModePerm)
+	err := os.MkdirAll(cliStruct.DataDir, os.ModePerm)
 
 	if err != nil {
 		fmt.Printf("Error creating database: %v\n", err)
 		os.Exit(1)
 	}
 
-	db := database.OpenDB(cliStruct.DatabasePath)
+	dbPath := filepath.Join(cliStruct.DataDir, "authfish.sqlite")
+	db := database.OpenDB(dbPath)
 	database.RunMigrations(db)
 
 	appContext := context.AppContext{
