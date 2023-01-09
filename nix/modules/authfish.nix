@@ -30,7 +30,7 @@ in
       };
 
       domains = mkOption {
-        type = types.str;
+        type = types.listOf types.str;
       };
 
       virtualHostName = mkOption {
@@ -65,7 +65,7 @@ in
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        ExecStart = "${pkgs.authfish}/bin/authfish server --port ${toString cfg.port} --domain ${cfg.domains}";
+        ExecStart = "${pkgs.authfish}/bin/authfish server --port ${toString cfg.port} --domain ${strings.concatStringsSep "," cfg.domains}";
         Restart = "on-failure";
       };
     };
