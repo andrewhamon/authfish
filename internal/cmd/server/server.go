@@ -25,7 +25,7 @@ import (
 )
 
 type ServerCmd struct {
-	Host     string   `help:"Hello world Hostname or IP address to listen on, or path to socket if --protocol=unix" default:"127.0.0.1"`
+	Host     string   `help:"Hello world !!! Hostname or IP address to listen on, or path to socket if --protocol=unix" default:"127.0.0.1"`
 	Port     int      `help:"Port to listen on. Only applies when --protocol=tcp (the default)" default:"8080"`
 	Protocol string   `help:"One of tcp,unix" default:"tcp" enum:"tcp,unix"`
 	Domain   []string `help:"One or more domains to set cookies for. Must set X-Original-URL header when proxying. First domain which is a substring of the request host will be chosen."`
