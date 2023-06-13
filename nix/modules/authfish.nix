@@ -1,4 +1,4 @@
-{ lib, pkgs, config, ... }:
+{ authfish }: { lib, pkgs, config, ... }:
 with lib;
 let
   cfg = config.services.authfish;
@@ -52,7 +52,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [
+    environment.systemPackages = [
       authfish
     ];
 
@@ -65,7 +65,7 @@ in
         Type = "simple";
         User = cfg.user;
         Group = cfg.group;
-        ExecStart = "${pkgs.authfish}/bin/authfish server --port ${toString cfg.port} --domain ${strings.concatStringsSep "," cfg.domains}";
+        ExecStart = "${authfish}/bin/authfish server --port ${toString cfg.port} --domain ${strings.concatStringsSep "," cfg.domains}";
         Restart = "on-failure";
       };
     };

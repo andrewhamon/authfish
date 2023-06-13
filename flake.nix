@@ -18,14 +18,8 @@
     ) // {
     lib = import ./nix/lib.nix;
     nixosModules.default = { pkgs, ... }: {
-      nixpkgs.overlays = [
-        (self: super:
-          {
-            authfish = import ./default.nix { inherit pkgs; };
-          })
-      ];
       imports = [
-        ./nix/modules/authfish.nix
+        (import ./nix/modules/authfish.nix { authfish = self.packages.${pkgs.system}.authfish; })
       ];
     };
   };
